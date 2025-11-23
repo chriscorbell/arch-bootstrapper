@@ -41,10 +41,29 @@ if [[ $configure_pacman =~ ^[Yy]$ ]]; then
     fi
 fi
 
-# Faster mirrors
-sudo pacman -Syu reflector rsync
-echo -e "\n\e[32mUpdating mirrorlist with reflector...\e[0m\n"
-sudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist
+# Ask about reflector
+echo
+echo -e "\n\e[32mDo you want to install reflector to generate a fast mirror list?\e[0m\n"
+echo -e "1) \e[36mInstall and run now\e[0m"
+echo -e "2) \e[36mInstall but don't run right now\e[0m"
+echo -e "3) \e[36mDon't install\e[0m"
+read -p "$(echo -e '\n\e[35mEnter your choice (1-3):\e[0m ') " reflector_choice
+
+case $reflector_choice in
+    1)
+        echo -e "\n\e[32mInstalling reflector...\e[0m\n"
+        sudo pacman -S --needed --noconfirm reflector rsync
+        echo -e "\n\e[32mUpdating mirrorlist with reflector...\e[0m\n"
+        sudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist
+        ;;
+    2)
+        echo -e "\n\e[32mInstalling reflector...\e[0m\n"
+        sudo pacman -S --needed --noconfirm reflector rsync
+        ;;
+    3)
+        echo -e "\n\e[32mSkipping reflector installation.\e[0m\n"
+        ;;
+esac
 
 # Install base dependencies
 TOTAL_STEPS=4
@@ -52,7 +71,7 @@ CURRENT_STEP=0
 
 ((CURRENT_STEP++))
 echo -e "\n\e[32m[$CURRENT_STEP/$TOTAL_STEPS] Installing base dependencies...\e[0m\n"
-if ! sudo pacman -S --needed --noconfirm jq socat nano git github-cli wget curl unzip zsh yazi bat btop cifs-utils fastfetch ffmpeg fzf base-devel rust; then
+if ! sudo pacman -S --needed --noconfirm jq socat nano git github-cli wget curl unzip zsh yazi dysk bat btop cifs-utils fastfetch ffmpeg fzf base-devel; then
     echo -e "\n\e[31mError: Failed to install base dependencies\e[0m\n"
     exit 1
 fi
@@ -94,14 +113,6 @@ if ! command -v yay &> /dev/null; then
     cd -
 else
     echo -e "\n\e[33m[$CURRENT_STEP/$TOTAL_STEPS] yay already installed\e[0m\n"
-fi
-
-# Install dysk
-((CURRENT_STEP++))
-echo -e "\n\e[32m[$CURRENT_STEP/$TOTAL_STEPS] Installing dysk...\e[0m\n"
-if ! cargo install --locked dysk; then
-    echo -e "\n\e[31mError: Failed to install dysk\e[0m\n"
-    exit 1
 fi
 
 # Ask about GPU type
@@ -165,7 +176,7 @@ esac
 
 # Ask about desktop packages
 echo
-read -p "$(echo -e '\e[32mDo you want to install additional packages for desktop use?\n\n\e[33m(yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
+read -p "$(echo -e '\e[32mDo you want to install hyprland along with additional desktop packages?\n\n\e[33m(yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock hyprpicker polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look brightnessctl obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
 install_desktop=${install_desktop:-Y}
 
 if [[ $install_desktop =~ ^[Yy]$ ]]; then
@@ -185,12 +196,31 @@ if [[ $install_desktop =~ ^[Yy]$ ]]; then
     
     ((DESKTOP_CURRENT++))
     echo -e "\n\e[32m[$DESKTOP_CURRENT/$DESKTOP_STEPS] Installing desktop packages...\e[0m\n"
-    yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam
+    yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock hyprpicker polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam
 fi
+
+# Ask about device type
+echo
+echo -e "\n\e[32mIs this machine a desktop, or is it a laptop?\e[0m"
+echo -e "\n\e[33mLaptop option installs TLP for power management\e[0m\n"
+echo -e "1) \e[36mDesktop\e[0m"
+echo -e "2) \e[36mLaptop\e[0m"
+read -p "$(echo -e '\n\e[35mEnter your choice (1 or 2):\e[0m ') " device_type
+
+case $device_type in
+    2)
+        echo -e "\n\e[32mInstalling TLP for laptop power management...\e[0m\n"
+        yay -S --needed --noconfirm tlp
+        sudo systemctl enable --now tlp
+        ;;
+    *)
+        echo -e "\e[32mSkipping laptop-specific packages.\e[0m\n"
+        ;;
+esac
 
 # Ask about installing dotfiles
 echo
-read -p "$(echo -e '\n\e[32mDo you want to install Chris Corbell'\''s dotfiles?\n\n\e[33m(Includes Tokyo Night theme for various applications, this step also installs Tokyo Night GTK theme + icons)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_dotfiles
+read -p "$(echo -e '\n\e[32mDo you want to install Chris'\''s dotfiles?\n\n\e[33m(Includes configs and Tokyo Night theming for GTK, hyprland, hyprlock, waybar, dunst, wofi, nano, kitty, btop, cava and fastfetch, along with Tokyo Night icons)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_dotfiles
 install_dotfiles=${install_dotfiles:-Y}
 
 if [[ $install_dotfiles =~ ^[Yy]$ ]]; then
@@ -232,6 +262,14 @@ if [[ $install_dotfiles =~ ^[Yy]$ ]]; then
         rm -rf "$THEME_DIR"
     fi
     
+    # If laptop was chosen, uncomment battery module in waybar config
+    if [[ $device_type == "2" ]]; then
+        if [ -f "$HOME/.config/waybar/config.jsonc" ]; then
+            echo -e "\n\e[32mEnabling battery module in waybar...\e[0m\n"
+            sed -i 's|^[[:space:]]*// "battery",|        "battery",|' "$HOME/.config/waybar/config.jsonc"
+        fi
+    fi
+    
     # Configure ly display manager
     echo -e "\n\e[32mConfiguring ly display manager...\e[0m\n"
     sudo sed -i 's/^allow_empty_password = true/allow_empty_password = false/' /etc/ly/config.ini
@@ -251,8 +289,12 @@ fi
 
 sudo rm /usr/share/wayland-sessions/hyprland-uwsm.desktop
 sudo systemctl enable ly
+mkdir -p "$HOME/Screenshots"
+
+echo -e "\e[32mSetting default shell to zsh...\e[0m\n"
+chsh -s /usr/bin/zsh
 
 echo
 echo -e "\n\e[32m=== Installation complete!\e[0m\n"
-echo -e "\e[35m=== Zsh was installed, run "chsh -s $(which zsh)" to set it as your default shell\e[0m\n"
+
 echo -e "\e[31m=== It is recommended to reboot your system to apply all changes\e[0m\n"
