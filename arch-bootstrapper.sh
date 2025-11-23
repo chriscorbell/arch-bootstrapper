@@ -182,6 +182,71 @@ if [[ $install_desktop =~ ^[Yy]$ ]]; then
     echo "[$DESKTOP_CURRENT/$DESKTOP_STEPS] Installing desktop packages..."
     yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava celluloid dunst firefox hyprland hyprlock swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam
 fi
+
+# Ask about installing dotfiles
+echo
+read -p "$(echo -e '\e[32mDo you want to install Chris Corbell'\''s dotfiles?\n\e[33m(Includes Tokyo Night theme for various applications, this step also installs Tokyo Night GTK theme + icons)\n\e[35mEnter your choice (Y/n):\e[0m ') " install_dotfiles
+install_dotfiles=${install_dotfiles:-Y}
+
+if [[ $install_dotfiles =~ ^[Yy]$ ]]; then
+    echo "Installing dotfiles..."
+    # Clone the repo to a temporary directory
+    TEMP_DIR=$(mktemp -d)
+    if git clone https://github.com/chriscorbell/dotfiles "$TEMP_DIR"; then
+        # Copy all files including hidden ones to home directory
+        cp -r "$TEMP_DIR"/. "$HOME/"
+        # Remove the .git directory
+        rm -rf "$HOME/.git"
+        # Clean up temp directory
+        rm -rf "$TEMP_DIR"
+        echo "Dotfiles installed successfully!"
+    else
+        echo "Error: Failed to clone dotfiles repository"
+        rm -rf "$TEMP_DIR"
+    fi
+    
+    # Install Tokyo Night GTK theme and icons
+    echo "Installing Tokyo Night GTK theme and icons..."
+    THEME_DIR=$(mktemp -d)
+    if git clone https://github.com/Fausto-Korpsvart/Tokyonight-GTK-Theme "$THEME_DIR"; then
+        # Install GTK theme
+        cd "$THEME_DIR/themes"
+        chmod +x install.sh
+        ./install.sh -t purple -c dark -s compact -l
+        cd -
+        
+        # Install icons
+        mkdir -p "$HOME/.icons"
+        cp -r "$THEME_DIR/icons/Tokyonight-Moon" "$HOME/.icons/"
+        
+        # Clean up
+        rm -rf "$THEME_DIR"
+        echo "Tokyo Night GTK theme and icons installed successfully!"
+    else
+        echo "Error: Failed to clone Tokyo Night GTK theme repository"
+        rm -rf "$THEME_DIR"
+    fi
+    
+    # Configure ly display manager
+    echo "Configuring ly display manager..."
+    sudo sed -i 's/^allow_empty_password = true/allow_empty_password = false/' /etc/ly/config.ini
+    sudo sed -i 's/^animation = none/animation = colormix/' /etc/ly/config.ini
+    sudo sed -i 's/^bg = 0x00000000/bg = 0x001A1B26/' /etc/ly/config.ini
+    sudo sed -i 's/^bigclock = none/bigclock = en/' /etc/ly/config.ini
+    sudo sed -i 's/^border_fg = 0x00FFFFFF/border_fg = 0x00A9B1D6/' /etc/ly/config.ini
+    sudo sed -i 's/^clear_password = false/clear_password = true/' /etc/ly/config.ini
+    sudo sed -i 's/^clock = null/clock = %I:%M %p/' /etc/ly/config.ini
+    sudo sed -i 's/^colormix_col1 = 0x00FF0000/colormix_col1 = 0x001A1B26/' /etc/ly/config.ini
+    sudo sed -i 's/^colormix_col2 = 0x00FF0000/colormix_col2 = 0x001A1B26/' /etc/ly/config.ini
+    sudo sed -i 's/^colormix_col3 = 0x00FF0000/colormix_col3 = 0x001A1B26/' /etc/ly/config.ini
+    sudo sed -i 's/^error_bg = 0x00000000/error_bg = 0x00F7768E/' /etc/ly/config.ini
+    sudo sed -i 's/^error_fg = 0x01FF0000/error_fg = 0x011A1B26/' /etc/ly/config.ini
+    sudo sed -i 's/^fg = 0x00FFFFFF/fg = 0x00A9B1D6/' /etc/ly/config.ini
+fi
+
+sudo rm /usr/share/wayland-sessions/hyprland-uwsm.desktop
+sudo systemctl enable --now ly
+
 echo
 echo -e "\e[32m=== Installation complete!\e[0m\n"
 echo -e "\e[35m=== Zsh was installed, run "chsh -s $(which zsh)" to set it as your default shell\e[0m\n"
