@@ -43,6 +43,7 @@ fi
 
 # Faster mirrors
 sudo pacman -Syu reflector rsync
+echo -e "\e[32mUpdating mirrorlist with reflector...\e[0m"
 sudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist
 
 # Install base dependencies
