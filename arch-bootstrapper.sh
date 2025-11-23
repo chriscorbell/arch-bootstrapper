@@ -72,18 +72,18 @@ fi
 # Ask about GPU type
 echo
 echo -e "\e[32mWhich type of GPU do you have?\e[0m\n"
-echo -e "1) \e[34mNVIDIA\e[0m"
-echo -e "2) \e[34mAMD\e[0m"
-echo -e "3) \e[34mIntel\e[0m"
-echo -e "4) \e[34mSkip GPU driver installation\e[0m\n"
+echo -e "1) \e[36mNVIDIA\e[0m\n(Choose between open-source and proprietary drivers in the next step)\n\e[0m"
+echo -e "2) \e[36mAMD\n\e[33m(yay -S --needed --noconfirm mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader)\n\e[0m"
+echo -e "3) \e[36mIntel\n\e[33m(yay -S --needed --noconfirm mesa lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader)\n\e[0m"
+echo -e "4) \e[36mSkip GPU driver installation\e[0m\n"
 read -p "$(echo -e '\e[35mEnter your choice (1-4):\e[0m ') " gpu_choice
 
 case $gpu_choice in
     1)
         echo
         echo -e "\e[32mWhich NVIDIA GPU series do you have?\e[0m\n"
-        echo -e "1) \e[34mGeForce 16 series and newer\n\e[33m(nvidia-open-dkms, nvidia-utils, lib32-nvidia-utils, nvidia-settings, vulkan-icd-loader, lib32-vulkan-icd-loader)\n\e[0m"
-        echo -e "2) \e[34mGeForce 10 series and older\n\e[33m(nvidia-dkms, nvidia-utils, lib32-nvidia-utils, nvidia-settings, vulkan-icd-loader, lib32-vulkan-icd-loader)\n\e[0m"
+        echo -e "1) \e[36mGeForce 16 series and newer\n\e[33m(yay -S --needed --noconfirm nvidia-open-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader)\n\e[0m"
+        echo -e "2) \e[36mGeForce 10 series and older\n\e[33m(yay -S --needed --noconfirm nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader)\n\e[0m"
         read -p "$(echo -e '\e[35mEnter your choice (1 or 2):\e[0m ') " nvidia_choice
         
         # Check if multilib is enabled (needed for 32-bit libs)
@@ -130,7 +130,7 @@ esac
 
 # Ask about desktop packages
 echo
-read -p "$(echo -e '\e[32mDo you want to install additional packages for desktop use?\n\n\e[33m(hyprland, hyprlock, swww, waybar, nautilus, clipboard, ly, kitty, obs studio, vscode, fonts, bluetooth, pipewire, firefox, cava, celluloid, dunst, steam, wine, flatpak)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
+read -p "$(echo -e '\e[32mDo you want to install additional packages for desktop use?\n\n\e[33m(yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava celluloid dunst firefox hyprland hyprlock swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
 install_desktop=${install_desktop:-Y}
 
 if [[ $install_desktop =~ ^[Yy]$ ]]; then
@@ -153,4 +153,6 @@ if [[ $install_desktop =~ ^[Yy]$ ]]; then
     yay -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava celluloid dunst firefox hyprland hyprlock swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam
 fi
 echo
-echo -e "\e[32m=== Installation complete! ===\e[0m\n"
+echo -e "\e[32m=== Installation complete!\e[0m\n"
+echo -e "\e[35m=== Zsh was installed, run "chsh -s $(which zsh)" to set it as your default shell\e[0m\n"
+echo -e "\e[31m=== It is recommended to reboot your system to apply all changes\e[0m\n"
