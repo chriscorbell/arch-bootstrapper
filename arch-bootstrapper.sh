@@ -3,12 +3,42 @@
 echo "=== Arch Linux Dependencies Installer ==="
 echo
 
-# Configure pacman
-echo -e "\e[32mConfiguring pacman...\e[0m"
-sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
-sudo sed -i 's/^#VerbosePkgLists$/VerbosePkgLists/' /etc/pacman.conf
-if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
-    sudo sed -i '/^VerbosePkgLists/a ILoveCandy' /etc/pacman.conf
+# Ask about passwordless sudo
+read -p "$(echo -e "\e[32mDo you want to enable passwordless sudo for your user?\n\e[33m(Creates \"%wheel ALL=(ALL:ALL) NOPASSWD: ALL\" override in /etc/sudoers.d/00_$USER)\n\e[35mEnter your choice (Y/n):\e[0m ") " enable_passwordless_sudo
+enable_passwordless_sudo=${enable_passwordless_sudo:-Y}
+
+if [[ $enable_passwordless_sudo =~ ^[Yy]$ ]]; then
+    echo -e "\e[32mEnabling passwordless sudo...\e[0m"
+    # Check if there's already a user-specific override from archinstall
+    if [ -f "/etc/sudoers.d/00_$USER" ]; then
+        # Check if NOPASSWD is already set (uncommented)
+        if grep -q "^[^#]*%wheel.*NOPASSWD" "/etc/sudoers.d/00_$USER"; then
+            echo "NOPASSWD already enabled in /etc/sudoers.d/00_$USER"
+        else
+            # Update existing file to add NOPASSWD (handles both commented and uncommented lines)
+            sudo sed -i "s/^#[[:space:]]*%wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/" "/etc/sudoers.d/00_$USER"
+            sudo sed -i "s/^#[[:space:]]*%wheel ALL=(ALL) ALL/%wheel ALL=(ALL) NOPASSWD: ALL/" "/etc/sudoers.d/00_$USER"
+            sudo sed -i "s/^%wheel ALL=(ALL:ALL) ALL$/%wheel ALL=(ALL:ALL) NOPASSWD: ALL/" "/etc/sudoers.d/00_$USER"
+            sudo sed -i "s/^%wheel ALL=(ALL) ALL$/%wheel ALL=(ALL) NOPASSWD: ALL/" "/etc/sudoers.d/00_$USER"
+        fi
+    else
+        # Create new sudoers override file in /etc/sudoers.d/
+        echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/wheel-nopasswd > /dev/null
+        sudo chmod 440 /etc/sudoers.d/wheel-nopasswd
+    fi
+fi
+
+# Ask about pacman configuration
+read -p "$(echo -e '\e[32mDo you want to set prettifying options in /etc/pacman.conf?\n\e[33m(Color, VerbosePkgLists, ILoveCandy)\n\e[35mEnter your choice (Y/n):\e[0m ') " configure_pacman
+configure_pacman=${configure_pacman:-Y}
+
+if [[ $configure_pacman =~ ^[Yy]$ ]]; then
+    echo -e "\e[32mConfiguring pacman...\e[0m"
+    sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
+    sudo sed -i 's/^#VerbosePkgLists$/VerbosePkgLists/' /etc/pacman.conf
+    if ! grep -q "^ILoveCandy" /etc/pacman.conf; then
+        sudo sed -i '/^VerbosePkgLists/a ILoveCandy' /etc/pacman.conf
+    fi
 fi
 
 # Install base dependencies
