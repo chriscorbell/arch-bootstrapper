@@ -250,7 +250,7 @@ if [[ $install_dotfiles =~ ^[Yy]$ ]]; then
 fi
 
 sudo rm /usr/share/wayland-sessions/hyprland-uwsm.desktop
-sudo systemctl enable --now ly
+sudo systemctl enable ly
 
 echo
 echo -e "\e[32m=== Installation complete!\e[0m\n"
