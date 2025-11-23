@@ -41,6 +41,10 @@ if [[ $configure_pacman =~ ^[Yy]$ ]]; then
     fi
 fi
 
+# Faster mirrors
+sudo pacman -Syu reflector rsync
+sudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist
+
 # Install base dependencies
 TOTAL_STEPS=4
 CURRENT_STEP=0
