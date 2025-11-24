@@ -29,7 +29,7 @@ if [[ $enable_passwordless_sudo =~ ^[Yy]$ ]]; then
 fi
 
 # Ask about pacman configuration
-read -p "$(echo -e '\n\e[32mDo you want to set prettifying options in /etc/pacman.conf?\n\n\e[33m(Color, VerbosePkgLists, ILoveCandy)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " configure_pacman
+read -p "$(echo -e '\n\e[32mDo you want to set the below options in /etc/pacman.conf?\n\n\e[33m(Color, VerbosePkgLists, ILoveCandy, ParallelDownloads = 10)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " configure_pacman
 configure_pacman=${configure_pacman:-Y}
 
 if [[ $configure_pacman =~ ^[Yy]$ ]]; then
@@ -46,8 +46,8 @@ fi
 # Ask about reflector
 echo
 echo -e "\n\e[32mDo you want to install and run reflector to generate a fast mirror list?\e[0m"
-echo -e "\n\e[33msudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist\e[0m\n"
-echo -e "1) \e[36mInstall and run now\e[0m"
+echo -e "\n\e[33m(sudo reflector --country <COUNTRY_CODE> --score 20 --sort rate --save /etc/pacman.d/mirrorlist)\e[0m\n"
+echo -e "1) \e[36mInstall and run now\e[0m (automatically detects country from timezone/locale)"
 echo -e "2) \e[36mInstall but don't run right now\e[0m"
 echo -e "n) \e[36mDon't install\e[0m"
 read -p "$(echo -e '\n\e[35mEnter your choice (1-3):\e[0m ') " reflector_choice
@@ -57,7 +57,16 @@ case $reflector_choice in
         echo -e "\n\e[32mInstalling reflector...\e[0m\n"
         sudo pacman -S --needed --noconfirm reflector rsync
         echo -e "\n\e[32mUpdating mirrorlist with reflector...\e[0m\n"
-        sudo reflector --country US --score 20 --sort rate --save /etc/pacman.d/mirrorlist
+        
+        # Detect country from locale
+        COUNTRY_CODE=$(locale | grep -oP '^LC_TIME=.*_\K[A-Z]{2}' | head -1)
+        if [ -z "$COUNTRY_CODE" ]; then
+            COUNTRY_CODE=$(locale | grep -oP '^LANG=.*_\K[A-Z]{2}' | head -1)
+        fi
+        COUNTRY_CODE=${COUNTRY_CODE:-US}
+        
+        echo -e "\e[33mDetected country: $COUNTRY_CODE\e[0m\n"
+        sudo reflector --country "$COUNTRY_CODE" --score 20 --sort rate --save /etc/pacman.d/mirrorlist
         ;;
     2)
         echo -e "\n\e[32mInstalling reflector...\e[0m\n"
@@ -70,7 +79,7 @@ esac
 
 # Ask about base TUI packages
 echo
-read -p "$(echo -e '\n\e[32mDo you want to install base TUI packages?\n\n\e[33m(jq socat nano git github-cli wget unzip zsh yazi dysk bat btop cifs-utils fastfetch ffmpeg fzf base-devel)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_base
+read -p "$(echo -e '\n\e[32mDo you want to install base TUI packages?\n\n\e[33m(sudo pacman -S --needed --noconfirm jq socat nano git github-cli wget unzip zsh yazi dysk bat btop cifs-utils fastfetch ffmpeg fzf base-devel)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_base
 install_base=${install_base:-Y}
 
 if [[ $install_base =~ ^[Yy]$ ]]; then
@@ -83,7 +92,7 @@ fi
 
 # Ask about kernel headers
 echo
-read -p "$(echo -e '\n\e[32mDo you want to install kernel headers?\n\n\e[33m(Automatically detects for installed kernels: linux, linux-zen, linux-lts, linux-hardened.)\n\n\e[31mNOTE: Kernel headers are necessary for nvidia-dkms\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_headers
+read -p "$(echo -e '\n\e[32mDo you want to install kernel headers?\n\n\e[33m(Automatically detects appropriate headers package for installed kernels: linux, linux-zen, linux-lts, linux-hardened)\n\n\e[31mNOTE: Kernel headers are necessary for nvidia-dkms!\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_headers
 install_headers=${install_headers:-Y}
 
 if [[ $install_headers =~ ^[Yy]$ ]]; then
@@ -111,8 +120,7 @@ echo
 echo -e "\n\e[32mWhich AUR helper do you want to install?\e[0m\n"
 echo -e "1) \e[36myay\e[0m"
 echo -e "2) \e[36mparu\e[0m"
-echo -e "n) \e[36mNeither (skip AUR helper installation)\e[0m"
-read -p "$(echo -e '\n\e[35mEnter your choice (1-3):\e[0m ') " aur_choice
+read -p "$(echo -e '\n\e[35mEnter your choice (1-2):\e[0m ') " aur_choice
 
 case $aur_choice in
     1)
@@ -152,10 +160,6 @@ case $aur_choice in
         else
             echo -e "\n\e[33mparu already installed\e[0m\n"
         fi
-        ;;
-    n)
-        AUR_HELPER=""
-        echo -e "\n\e[32mSkipping AUR helper installation.\e[0m\n"
         ;;
 esac
 
@@ -220,7 +224,7 @@ esac
 
 # Ask about desktop packages
 echo
-read -p "$(echo -e '\e[32mDo you want to install hyprland along with additional desktop packages?\n\n\e[33m('${AUR_HELPER:-pacman}' -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock hyprpicker polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look brightnessctl obs-studio openssh sassc ttf-jetbrains-mono-nerd visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
+read -p "$(echo -e '\e[32mDo you want to install hyprland along with additional desktop packages?\n\n\e[33m('${AUR_HELPER:-pacman}' -S --needed --noconfirm bluez bluez-libs bluez-utils pipewire pipewire-pulse wireplumber cava swayimg celluloid dunst firefox hyprland hyprlock hyprpicker polkit-gnome gnome-keyring swww nautilus wofi grim slurp wl-clipboard wl-clip-persist xdg-desktop-portal xdg-desktop-portal-hyprland xorg-xwayland ly inter-font kitty nwg-look brightnessctl obs-studio openssh sassc ttf-jetbrains-mono-nerd neovim visual-studio-code-bin playerctl waybar wine-staging wine-mono winetricks flatpak steam)\n\n\e[35mEnter your choice (Y/n):\e[0m ') " install_desktop
 install_desktop=${install_desktop:-Y}
 
 if [[ $install_desktop =~ ^[Yy]$ ]]; then
@@ -332,6 +336,29 @@ EOF
         if [ -f "$HOME/.config/waybar/config.jsonc" ]; then
             echo -e "\n\e[32mEnabling battery module in waybar...\e[0m\n"
             sed -i 's|^[[:space:]]*// "battery",|        "battery",|' "$HOME/.config/waybar/config.jsonc"
+        fi
+    fi
+    
+    # Configure waybar temperature sensor path
+    if [ -f "$HOME/.config/waybar/config.jsonc" ]; then
+        echo -e "\n\e[32mConfiguring waybar temperature sensor...\e[0m\n"
+        # Find the correct hwmon path for CPU package temperature
+        TEMP_PATH=$(for i in /sys/class/hwmon/hwmon*/temp*_input; do 
+            name=$(cat "$(dirname "$i")/name" 2>/dev/null)
+            label=$(cat "${i%_*}_label" 2>/dev/null)
+            if [[ "$name" == "coretemp" ]] || [[ "$name" == "k10temp" ]] || [[ "$name" == "zenpower" ]]; then
+                if [[ "$label" == "Package id 0" ]] || [[ "$label" == "Tdie" ]] || [[ "$label" == "Tctl" ]] || [[ -z "$label" ]]; then
+                    echo "$i"
+                    break
+                fi
+            fi
+        done)
+        
+        if [ -n "$TEMP_PATH" ]; then
+            sed -i "s|\"hwmon-path\": \".*\"|\"hwmon-path\": \"$TEMP_PATH\"|" "$HOME/.config/waybar/config.jsonc"
+            echo -e "\e[33mTemperature sensor configured: $TEMP_PATH\e[0m"
+        else
+            echo -e "\e[33mWarning: Could not automatically detect CPU temperature sensor path\e[0m"
         fi
     fi
     
