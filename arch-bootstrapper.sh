@@ -279,6 +279,12 @@ if [[ $install_dotfiles =~ ^[Yy]$ ]]; then
         # Clean up temp directory
         rm -rf "$TEMP_DIR"
         
+        # If paru was chosen, replace yay with paru in .zshrc
+        if [[ $AUR_HELPER == "paru" ]] && [ -f "$HOME/.zshrc" ]; then
+            echo -e "\n\e[32mUpdating .zshrc to use paru instead of yay...\e[0m\n"
+            sed -i 's/yay/paru/g' "$HOME/.zshrc"
+        fi
+        
         # Create VS Code settings
         code --install-extension enkia.tokyo-night
         mkdir -p "$HOME/.config/Code/User"
