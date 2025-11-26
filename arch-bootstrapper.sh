@@ -361,29 +361,13 @@ EOF
             echo -e "\e[33mWarning: Could not automatically detect CPU temperature sensor path\e[0m"
         fi
     fi
+    sudo rm /usr/share/wayland-sessions/hyprland-uwsm.desktop
+    sudo systemctl enable ly
+    mkdir -p "$HOME/Screenshots"
     
-    # Configure ly display manager
-    echo -e "\n\e[32mConfiguring ly display manager...\e[0m\n"
-    sudo sed -i 's/^allow_empty_password = true/allow_empty_password = false/' /etc/ly/config.ini
-    sudo sed -i 's/^animation = none/animation = colormix/' /etc/ly/config.ini
-    sudo sed -i 's/^bg = 0x00000000/bg = 0x001A1B26/' /etc/ly/config.ini
-    sudo sed -i 's/^border_fg = 0x00FFFFFF/border_fg = 0x00A9B1D6/' /etc/ly/config.ini
-    sudo sed -i 's/^clear_password = false/clear_password = true/' /etc/ly/config.ini
-    sudo sed -i 's/^clock = null/clock = %I:%M %p/' /etc/ly/config.ini
-    sudo sed -i 's/^colormix_col1 = 0x00FF0000/colormix_col1 = 0x001A1B26/' /etc/ly/config.ini
-    sudo sed -i 's/^colormix_col2 = 0x00FF0000/colormix_col2 = 0x007AA2F7/' /etc/ly/config.ini
-    sudo sed -i 's/^colormix_col3 = 0x00FF0000/colormix_col3 = 0x00AD8EE6/' /etc/ly/config.ini
-    sudo sed -i 's/^error_bg = 0x00000000/error_bg = 0x00F7768E/' /etc/ly/config.ini
-    sudo sed -i 's/^error_fg = 0x01FF0000/error_fg = 0x011A1B26/' /etc/ly/config.ini
-    sudo sed -i 's/^fg = 0x00FFFFFF/fg = 0x00A9B1D6/' /etc/ly/config.ini
+    echo -e "\e[32mSetting default shell to zsh...\e[0m\n"
+    chsh -s /usr/bin/zsh
 fi
-
-sudo rm /usr/share/wayland-sessions/hyprland-uwsm.desktop
-sudo systemctl enable ly
-mkdir -p "$HOME/Screenshots"
-
-echo -e "\e[32mSetting default shell to zsh...\e[0m\n"
-chsh -s /usr/bin/zsh
 
 echo
 echo -e "\n\e[32m=== Installation complete!\e[0m\n"
